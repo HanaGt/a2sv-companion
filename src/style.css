@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables for Easy Theming */
+:root {
+  /* Primary Colors - Change these to customize your theme */
+  --primary-bg: #1f2937; /* bg-gray-800 */
+  --primary-text: #ffffff; /* white */
+  --accent-blue: #1d4ed8; /* blue-700 */
+  --accent-blue-hover: #1e40af; /* blue-800 */
+  --accent-red: #dc2626; /* red-700 */
+  --accent-red-hover: #b91c1c; /* red-800 */
+  --input-bg: #374151; /* gray-700 */
+  --input-border: #4b5563; /* gray-600 */
+  --input-text: #ffffff; /* white */
+  --label-text: #ffffff; /* white */
+}
+
+html {
+  width: 20rem;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--primary-bg);
+  color: var(--primary-text);
+  padding: 0.5rem;
+}
+
+/* Custom Button Styles */
+#login-btn, #upload-btn {
+  background-color: var(--accent-blue) !important;
+}
+
+#login-btn:hover, #upload-btn:hover {
+  background-color: var(--accent-blue-hover) !important;
+}
+
+#logout-btn {
+  background-color: var(--accent-red) !important;
+}
+
+#logout-btn:hover {
+  background-color: var(--accent-red-hover) !important;
+}
+
+/* Custom Input Styles */
+input, select {
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--input-text) !important;
+}
+
+label {
+  color: var(--label-text) !important;
+}
