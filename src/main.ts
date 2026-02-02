@@ -5,7 +5,7 @@ import { getLocalStorage } from "./utils/readStorage";
 
 const login = () => {
   chrome.tabs.create({
-    url: `https://github.com/apps/YOUR_GITHUB_APP_SLUG/installations/new`,
+    url: `https://github.com/apps/a2sv-companion-test/installations/new`,
   });
 };
 

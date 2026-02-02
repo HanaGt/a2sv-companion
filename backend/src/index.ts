@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://a2sv-companion-dev.vercel.app'],
+  origin: ['http://localhost:3000', 'https://a2sv-companion-dev.vercel.app', 'chrome-extension://*'],
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
