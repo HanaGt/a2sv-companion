@@ -23,7 +23,7 @@ async function getPlatforms(): Promise<PlatformData> {
     return data;
   } catch (error) {
     console.error("Error fetching platform data:", error);
-    chrome.notifications.create("YOUR_EXTENSION_ID", {
+    chrome.notifications.create(" gkaohopfgoeleacanfildiemhgeikfhd", {
       type: "basic",
       iconUrl: "icons/icon_128.png",
       title: "Error",
@@ -53,7 +53,7 @@ async function getQuestions(platform: string) {
     return data;
   } catch (error) {
     console.error("Error fetching question data:", error);
-    chrome.notifications.create("YOUR_EXTENSION_ID", {
+    chrome.notifications.create(" gkaohopfgoeleacanfildiemhgeikfhd", {
       type: "basic",
       iconUrl: "icons/icon_128.png",
       title: "Error",

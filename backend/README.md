@@ -41,14 +41,7 @@ Backend API for the A2SV Companion Chrome Extension. This service receives codin
    cp .env.example .env
    ```
 
-   Edit `.env` with your configuration:
-   ```env
-   GOOGLE_SHEETS_SPREADSHEET_ID=your_spreadsheet_id_here
-   GOOGLE_SHEETS_RANGE=Sheet1!A:G
-   GOOGLE_SERVICE_ACCOUNT_EMAIL=your-service-account@project.iam.gserviceaccount.com
-   GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
-   PORT=5000
-   NODE_ENV=development
+
    ```
 
 ### Development
