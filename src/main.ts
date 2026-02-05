@@ -5,7 +5,7 @@ import { getLocalStorage } from "./utils/readStorage";
 
 const login = () => {
   chrome.tabs.create({
-    url: `https://github.com/apps/a2sv-companion-test/installations/new`,
+    url: `https://github.com/login/oauth/authorize?client_id=Ov23liHo177EntBStDIE&scope=repo,user&redirect_uri=https://a2sv-companion.vercel.app/`,
   });
 };
 

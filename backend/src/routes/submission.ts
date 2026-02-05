@@ -22,7 +22,7 @@ router.post('/', async (req: Request, res: Response) => {
     if (error) {
       return res.status(400).json({
         error: 'Validation failed',
-        details: error.details.map(detail => detail.message)
+        details: error.details.map((detail: Joi.ValidationErrorItem) => detail.message)
       });
     }
 

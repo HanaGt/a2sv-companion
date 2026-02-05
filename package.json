@@ -5,14 +5,14 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/meraf00/a2sv-companion.git"
+    "url": "git@github.com:a2sv/a2sv-companion.git"
   },
-  "author": "Leul Wujira",
+  "author": "A2SV",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/meraf00/a2sv-companion/issues"
+    "url": ""
   },
-  "homepage": "https://github.com/meraf00/a2sv-companion#readme",
+  "homepage": "",
   "scripts": {
     "dev": "webpack --mode production --watch",
     "build": "webpack --mode production"

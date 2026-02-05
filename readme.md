@@ -10,7 +10,7 @@
 
 ## Overview
 
-- Repo for the [A2SV Companion backend](https://github.com/meraf00/a2sv-companion-backend)
+
 
 ### Authentication
 

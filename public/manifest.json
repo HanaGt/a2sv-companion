@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "My Coding Companion",
-  "description": "Personal coding companion for tracking solutions",
+  "name": "A2SV Companion",
+  "description": "A2SV Companion Browser Extension",
   "version": "1.0",
   "icons": {
     "16": "icons/icon_16.png",
@@ -14,7 +14,7 @@
   },
   "action": {
     "default_popup": "index.html",
-    "default_title": "My Coding Companion",
+    "default_title": "A2SV Companion",
     "default_icon": "icons/icon_128.png"
   },
   "background": {
