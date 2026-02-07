@@ -2,11 +2,8 @@ import { google } from 'googleapis';
 
 export interface SubmissionData {
   studentName: string;
-  attempts: number;
+  problemName: string;
   timeTaken: number;
-  questionUrl: string;
-  platform: string;
-  gitUrl: string;
 }
 
 export class GoogleSheetsService {
@@ -33,29 +30,64 @@ export class GoogleSheetsService {
   static async appendSubmission(submission: SubmissionData): Promise<void> {
     this.initialize();
 
-    const timestamp = new Date().toISOString();
-    const values = [
-      [
-        timestamp,
-        submission.studentName,
-        submission.attempts,
-        submission.timeTaken,
-        submission.questionUrl,
-        submission.platform,
-        submission.gitUrl
-      ]
-    ];
-
     try {
-      await this.sheets.spreadsheets.values.append({
-        spreadsheetId: this.spreadsheetId,
-        range: this.range,
-        valueInputOption: 'RAW',
-        resource: { values },
-      });
+      // First, read existing data to find the student row
+      const existingData = await this.getSheetData();
+
+      // Find the column index for the problem
+      const problemColumnIndex = this.getProblemColumnIndex(submission.problemName);
+      if (problemColumnIndex === -1) {
+        throw new Error(`Unknown problem: ${submission.problemName}`);
+      }
+
+      // Look for existing student row
+      let studentRowIndex = -1;
+      for (let i = 0; i < existingData.length; i++) {
+        if (existingData[i][0] === submission.studentName) {
+          studentRowIndex = i;
+          break;
+        }
+      }
+
+      if (studentRowIndex >= 0) {
+        // Update existing student row
+        const range = `Sheet1!${String.fromCharCode(65 + problemColumnIndex)}${studentRowIndex + 1}`;
+        await this.sheets.spreadsheets.values.update({
+          spreadsheetId: this.spreadsheetId,
+          range: range,
+          valueInputOption: 'RAW',
+          resource: { values: [[submission.timeTaken]] },
+        });
+      } else {
+        // Create new student row
+        const newRow: (string | number)[] = [submission.studentName, '', '', ''];
+        newRow[problemColumnIndex] = submission.timeTaken;
+
+        await this.sheets.spreadsheets.values.append({
+          spreadsheetId: this.spreadsheetId,
+          range: this.range,
+          valueInputOption: 'RAW',
+          resource: { values: [newRow] },
+        });
+      }
     } catch (error) {
       console.error('Error appending to Google Sheets:', error);
       throw new Error('Failed to save submission to Google Sheets');
+    }
+  }
+
+  private static getProblemColumnIndex(problemName: string): number {
+    const normalizedName = problemName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    switch (normalizedName) {
+      case 'twosum':
+        return 1; // Column B
+      case 'reversestring':
+        return 2; // Column C
+      case 'lengthoflastword':
+        return 3; // Column D
+      default:
+        return -1;
     }
   }
 

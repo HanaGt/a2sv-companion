@@ -28,11 +28,8 @@ const push = async (message: any, sendResponse: (response?: any) => void) => {
     ).then((gitUrl) => {
       a2sv.pushToSheet(
         studentName,
-        tries,
-        timeTaken,
-        'https://leetcode.com/problems/' + question.titleSlug + '/',
-        'LeetCode',
-        gitUrl
+        question.title,
+        timeTaken
       );
     });
 

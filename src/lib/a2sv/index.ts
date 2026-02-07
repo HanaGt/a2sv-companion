@@ -2,11 +2,8 @@ import config from '../../config';
 
 const pushToSheet = async (
   studentName: string,
-  attempts: number,
-  timeTaken: number,
-  questionUrl: string,
-  platform: string,
-  gitUrl: string
+  problemName: string,
+  timeTaken: number
 ) => {
   const response = await fetch(config.api.url, {
     method: 'POST',
@@ -15,11 +12,8 @@ const pushToSheet = async (
     },
     body: JSON.stringify({
       studentName,
-      attempts,
+      problemName,
       timeTaken,
-      gitUrl,
-      questionUrl,
-      platform,
     }),
   });
 

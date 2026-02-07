@@ -7,11 +7,8 @@ const router = Router();
 // Validation schema for submission data
 const submissionSchema = Joi.object({
   studentName: Joi.string().required().min(1).max(100),
-  attempts: Joi.number().integer().min(1).required(),
-  timeTaken: Joi.number().min(0).required(),
-  questionUrl: Joi.string().uri().required(),
-  platform: Joi.string().valid('Codeforces', 'LeetCode').required(),
-  gitUrl: Joi.string().uri().required()
+  problemName: Joi.string().required().valid('Two Sum', 'Reverse String', 'Length of Last Word'),
+  timeTaken: Joi.number().min(0).required()
 });
 
 // POST /api - Submit solution data to Google Sheets
@@ -26,16 +23,13 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
-    const { studentName, attempts, timeTaken, questionUrl, platform, gitUrl } = value;
+    const { studentName, problemName, timeTaken } = value;
 
     // Submit to Google Sheets
     await GoogleSheetsService.appendSubmission({
       studentName,
-      attempts,
-      timeTaken,
-      questionUrl,
-      platform,
-      gitUrl
+      problemName,
+      timeTaken
     });
 
     res.status(200).json({

@@ -212,11 +212,8 @@ function onSubmit() {
           a2sv
             .pushToSheet(
               storage.studentName,
-              formdata.attempts,
-              formdata.timeTaken,
               formdata.availableQuestions,
-              formdata.codingPlatform,
-              gitUrl,
+              formdata.timeTaken,
             )
             .then((result) => {
               // send notification

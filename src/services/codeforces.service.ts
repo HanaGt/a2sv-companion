@@ -39,14 +39,12 @@ const push = async (
       upload(selectedRepo, path, code, commitMsg).then((gitUrl) => {
         Codeforces.getTries(codeforcesHandle, submission.id)
           .then((tries) => {
-            A2SV.pushToSheet(
-              studentName,
-              tries,
-              timeTaken,
-              questionUrl,
-              'Codeforces',
-              gitUrl
-            );
+            // For now, skip Codeforces submissions since the new format is for specific LeetCode problems
+            // A2SV.pushToSheet(
+            //   studentName,
+            //   submission.problem.name,
+            //   timeTaken
+            // );
           })
           .then(onSuccess)
           .catch((e) => onFailure());
