@@ -53,8 +53,8 @@ export class GoogleSheetsService {
       const timeFormatted = `${submission.timeTaken} min`;
 
       if (studentRowIndex >= 0) {
-        // Update existing student row - put time in column B and attempts in problem column
-        const rowRange = `Sheet1!A${studentRowIndex + 1}:F${studentRowIndex + 1}`;
+        // Update existing student row - put attempts and time in the problem's columns
+        const rowRange = `Sheet1!A${studentRowIndex + 1}:G${studentRowIndex + 1}`;
 
         // Read the current row
         const currentRowResponse = await this.sheets.spreadsheets.values.get({
@@ -65,13 +65,13 @@ export class GoogleSheetsService {
         let currentRow = currentRowResponse.data.values ? currentRowResponse.data.values[0] : [];
 
         // Ensure the row has enough columns
-        while (currentRow.length < 6) {
+        while (currentRow.length < 7) {
           currentRow.push('');
         }
 
-        // Update time in column B (index 1) and attempts in problem column
-        currentRow[1] = timeFormatted;
+        // Update attempts and time in the problem's columns
         currentRow[problemColumnIndex] = submission.attempts;
+        currentRow[problemColumnIndex + 1] = timeFormatted;
 
         // Update the entire row
         await this.sheets.spreadsheets.values.update({
@@ -83,16 +83,18 @@ export class GoogleSheetsService {
       } else {
         // Create new student row with all columns initialized
         const newRow: (string | number)[] = [
-          submission.studentName, // Column A
-          timeFormatted,          // Column B (Time)
-          '',                     // Column C (Two Sum attempts)
-          '',                     // Column D (Reverse String attempts)
-          '',                     // Column E (Length of Last Word attempts)
-          ''                      // Column F (unused)
+          submission.studentName, // Column A - Student Name
+          '',                     // Column B - Two Sum attempts
+          '',                     // Column C - Two Sum time
+          '',                     // Column D - Reverse String attempts
+          '',                     // Column E - Reverse String time
+          '',                     // Column F - Length of Last Word attempts
+          ''                      // Column G - Length of Last Word time
         ];
 
-        // Set attempts in the appropriate problem column
+        // Set attempts and time in the appropriate problem columns
         newRow[problemColumnIndex] = submission.attempts;
+        newRow[problemColumnIndex + 1] = timeFormatted;
 
         await this.sheets.spreadsheets.values.append({
           spreadsheetId: this.spreadsheetId,
@@ -112,11 +114,11 @@ export class GoogleSheetsService {
 
     switch (normalizedName) {
       case 'twosum':
-        return 2; // Column C - Two Sum Attempts
+        return 1; // Column B - Two Sum Attempts (matches sheet headers)
       case 'reversestring':
-        return 3; // Column D - Reverse String Attempts
+        return 3; // Column D - Reverse String Attempts (matches sheet headers)
       case 'lengthoflastword':
-        return 4; // Column E - Length of Last Word Attempts
+        return 5; // Column F - Length of Last Word Attempts (matches sheet headers)
       default:
         return -1;
     }
