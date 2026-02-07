@@ -54,27 +54,44 @@ export class GoogleSheetsService {
 
       if (studentRowIndex >= 0) {
         // Update existing student row - put time in column B and attempts in problem column
-        const timeRange = `Sheet1!B${studentRowIndex + 1}`;
-        const attemptsRange = `Sheet1!${String.fromCharCode(65 + problemColumnIndex)}${studentRowIndex + 1}`;
+        const rowRange = `Sheet1!A${studentRowIndex + 1}:F${studentRowIndex + 1}`;
 
-        // Update time column
-        await this.sheets.spreadsheets.values.update({
+        // Read the current row
+        const currentRowResponse = await this.sheets.spreadsheets.values.get({
           spreadsheetId: this.spreadsheetId,
-          range: timeRange,
-          valueInputOption: 'RAW',
-          resource: { values: [[timeFormatted]] },
+          range: rowRange,
         });
 
-        // Update attempts in problem column
+        let currentRow = currentRowResponse.data.values ? currentRowResponse.data.values[0] : [];
+
+        // Ensure the row has enough columns
+        while (currentRow.length < 6) {
+          currentRow.push('');
+        }
+
+        // Update time in column B (index 1) and attempts in problem column
+        currentRow[1] = timeFormatted;
+        currentRow[problemColumnIndex] = submission.attempts;
+
+        // Update the entire row
         await this.sheets.spreadsheets.values.update({
           spreadsheetId: this.spreadsheetId,
-          range: attemptsRange,
+          range: rowRange,
           valueInputOption: 'RAW',
-          resource: { values: [[submission.attempts]] },
+          resource: { values: [currentRow] },
         });
       } else {
-        // Create new student row
-        const newRow: (string | number)[] = [submission.studentName, timeFormatted, '', '', '', ''];
+        // Create new student row with all columns initialized
+        const newRow: (string | number)[] = [
+          submission.studentName, // Column A
+          timeFormatted,          // Column B (Time)
+          '',                     // Column C (Two Sum attempts)
+          '',                     // Column D (Reverse String attempts)
+          '',                     // Column E (Length of Last Word attempts)
+          ''                      // Column F (unused)
+        ];
+
+        // Set attempts in the appropriate problem column
         newRow[problemColumnIndex] = submission.attempts;
 
         await this.sheets.spreadsheets.values.append({
