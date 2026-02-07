@@ -8,7 +8,8 @@ const router = Router();
 const submissionSchema = Joi.object({
   studentName: Joi.string().required().min(1).max(100),
   problemName: Joi.string().required().valid('Two Sum', 'Reverse String', 'Length of Last Word'),
-  timeTaken: Joi.number().min(0).required()
+  timeTaken: Joi.number().min(0).required(),
+  attempts: Joi.number().min(0).required()
 });
 
 // POST /api - Submit solution data to Google Sheets
@@ -23,13 +24,14 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
-    const { studentName, problemName, timeTaken } = value;
+    const { studentName, problemName, timeTaken, attempts } = value;
 
     // Submit to Google Sheets
     await GoogleSheetsService.appendSubmission({
       studentName,
       problemName,
-      timeTaken
+      timeTaken,
+      attempts
     });
 
     res.status(200).json({

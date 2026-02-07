@@ -214,6 +214,7 @@ function onSubmit() {
               storage.studentName,
               formdata.availableQuestions,
               formdata.timeTaken,
+              formdata.attempts,
             )
             .then((result) => {
               // send notification

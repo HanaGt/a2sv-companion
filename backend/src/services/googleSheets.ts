@@ -4,6 +4,7 @@ export interface SubmissionData {
   studentName: string;
   problemName: string;
   timeTaken: number;
+  attempts: number;
 }
 
 export class GoogleSheetsService {
@@ -49,19 +50,32 @@ export class GoogleSheetsService {
         }
       }
 
+      const timeFormatted = `${submission.timeTaken} min`;
+
       if (studentRowIndex >= 0) {
-        // Update existing student row
-        const range = `Sheet1!${String.fromCharCode(65 + problemColumnIndex)}${studentRowIndex + 1}`;
+        // Update existing student row - put time in column B and attempts in problem column
+        const timeRange = `Sheet1!B${studentRowIndex + 1}`;
+        const attemptsRange = `Sheet1!${String.fromCharCode(65 + problemColumnIndex)}${studentRowIndex + 1}`;
+
+        // Update time column
         await this.sheets.spreadsheets.values.update({
           spreadsheetId: this.spreadsheetId,
-          range: range,
+          range: timeRange,
           valueInputOption: 'RAW',
-          resource: { values: [[submission.timeTaken]] },
+          resource: { values: [[timeFormatted]] },
+        });
+
+        // Update attempts in problem column
+        await this.sheets.spreadsheets.values.update({
+          spreadsheetId: this.spreadsheetId,
+          range: attemptsRange,
+          valueInputOption: 'RAW',
+          resource: { values: [[submission.attempts]] },
         });
       } else {
         // Create new student row
-        const newRow: (string | number)[] = [submission.studentName, '', '', ''];
-        newRow[problemColumnIndex] = submission.timeTaken;
+        const newRow: (string | number)[] = [submission.studentName, timeFormatted, '', '', '', ''];
+        newRow[problemColumnIndex] = submission.attempts;
 
         await this.sheets.spreadsheets.values.append({
           spreadsheetId: this.spreadsheetId,
@@ -81,11 +95,11 @@ export class GoogleSheetsService {
 
     switch (normalizedName) {
       case 'twosum':
-        return 1; // Column B
+        return 2; // Column C - Two Sum Attempts
       case 'reversestring':
-        return 2; // Column C
+        return 3; // Column D - Reverse String Attempts
       case 'lengthoflastword':
-        return 3; // Column D
+        return 4; // Column E - Length of Last Word Attempts
       default:
         return -1;
     }

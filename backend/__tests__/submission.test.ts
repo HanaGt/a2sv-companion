@@ -16,11 +16,9 @@ describe('Submission API', () => {
   describe('POST /api', () => {
     const validSubmission = {
       studentName: 'John Doe',
-      attempts: 3,
+      problemName: 'Two Sum',
       timeTaken: 45,
-      questionUrl: 'https://codeforces.com/problemset/problem/1/A',
-      platform: 'Codeforces' as const,
-      gitUrl: 'https://github.com/user/repo/blob/main/codeforces/1A-Theatre-Square.cpp'
+      attempts: 3
     };
 
     it('should accept valid submission', async () => {
@@ -36,7 +34,7 @@ describe('Submission API', () => {
     });
 
     it('should reject invalid submission - missing required field', async () => {
-      const invalidSubmission = { ...validSubmission };
+      const invalidSubmission = { ...validSubmission } as any;
       delete invalidSubmission.studentName;
 
       const response = await request(app)
@@ -48,24 +46,10 @@ describe('Submission API', () => {
       expect(response.body.details).toContain('"studentName" is required');
     });
 
-    it('should reject invalid platform', async () => {
+    it('should reject invalid problem name', async () => {
       const invalidSubmission = {
         ...validSubmission,
-        platform: 'InvalidPlatform'
-      };
-
-      const response = await request(app)
-        .post('/api')
-        .send(invalidSubmission)
-        .expect(400);
-
-      expect(response.body.error).toBe('Validation failed');
-    });
-
-    it('should reject invalid URL', async () => {
-      const invalidSubmission = {
-        ...validSubmission,
-        questionUrl: 'not-a-url'
+        problemName: 'Invalid Problem'
       };
 
       const response = await request(app)
