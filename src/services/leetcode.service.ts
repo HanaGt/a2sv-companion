@@ -29,7 +29,8 @@ const push = async (message: any, sendResponse: (response?: any) => void) => {
       a2sv.pushToSheet(
         studentName,
         question.title,
-        timeTaken
+        timeTaken,
+        tries
       );
     });
 
