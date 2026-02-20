@@ -7,6 +7,7 @@ export const AuthEvent = {
 export const LeetcodeEvent = {
   PUSH_TO_SHEETS: 'pushToSheets',
   PUSH_LAST_SUBMISSION_TO_SHEETS: 'pushLastSubmissionToSheets',
+  WATCH_SUBMISSION_AND_PUSH: 'watchSubmissionAndPush',
   PUSH_TO_SHEETS_SUCCESS: 'pushToSheetsSuccess',
   PUSH_TO_SHEETS_FAILURE: 'pushToSheetsFailure',
 };

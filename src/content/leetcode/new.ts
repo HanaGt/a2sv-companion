@@ -5,14 +5,42 @@ const getSubmitBtn = () => {
   const btns = [].slice.call(
     document.querySelectorAll('button')
   ) as HTMLButtonElement[];
-  const btn = btns.filter((btn) => btn.lastChild.textContent === 'Solution')[0];
+  const btn = btns.filter((btn) => btn.lastChild?.textContent === 'Solution')[0];
   return btn ?? null;
+};
+
+const getCodeSubmitBtn = (): HTMLButtonElement | null => {
+  const byDataCy = document.querySelector<HTMLButtonElement>('[data-cy="submit-code-btn"]');
+  if (byDataCy) return byDataCy;
+  const btns = [].slice.call(document.querySelectorAll('button')) as HTMLButtonElement[];
+  const submitBtn = btns.find((b) => b.textContent?.trim() === 'Submit' && b.id !== 'push-to-sheets-btn');
+  return submitBtn ?? null;
 };
 
 const injectContent = (observer: MutationObserver, observe: () => void) => {
   if (document.getElementById('push-to-sheets-btn')) return;
 
   const submitBtn = getSubmitBtn();
+  const questionSlug = window.location.pathname.split('/')[2];
+
+  const codeSubmitBtn = getCodeSubmitBtn();
+  if (codeSubmitBtn && !codeSubmitBtn.getAttribute('data-a2sv-watch')) {
+    codeSubmitBtn.setAttribute('data-a2sv-watch', 'true');
+    codeSubmitBtn.addEventListener('click', () => {
+      chrome.runtime.sendMessage({
+        from: LeetcodeContentScript,
+        type: LeetcodeEvent.WATCH_SUBMISSION_AND_PUSH,
+        questionSlug,
+        startTime: Date.now(),
+      });
+    });
+  }
+
+  if (!submitBtn) {
+    observer.disconnect();
+    observe();
+    return;
+  }
 
   const pushBtn = submitBtn.cloneNode(true) as HTMLButtonElement;
   const timeField = document.createElement('input') as HTMLInputElement;
@@ -80,21 +108,34 @@ const injectContent = (observer: MutationObserver, observe: () => void) => {
     span.textContent = 'Pushing...';
     pushBtn.disabled = true;
 
+    const questionSlug = window.location.pathname.split('/')[2];
     chrome.runtime.sendMessage(
       {
         from: LeetcodeContentScript,
         type: LeetcodeEvent.PUSH_LAST_SUBMISSION_TO_SHEETS,
         timeTaken: timeField.value,
-        questionSlug: window.location.pathname.split('/')[2],
+        questionSlug,
       },
       (result) => {
-        if (result.status === 'success') {
+        if (result?.status === 'success') {
           alert('Pushed to sheet!');
         } else {
           alert('Failed to push to sheet!');
         }
         span.textContent = 'Push Last Submission';
         pushBtn.disabled = false;
+  const codeSubmitBtn = getCodeSubmitBtn();
+  if (codeSubmitBtn) {
+    codeSubmitBtn.addEventListener('click', () => {
+      chrome.runtime.sendMessage({
+        from: LeetcodeContentScript,
+        type: LeetcodeEvent.WATCH_SUBMISSION_AND_PUSH,
+        questionSlug: window.location.pathname.split('/')[2],
+        startTime: Date.now(),
+      });
+    });
+  }
+
       }
     );
   });

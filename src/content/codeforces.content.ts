@@ -1,84 +1,121 @@
 import { CodeforcesEvent } from '../events';
-import { CodeforcesSubmission } from '../lib/codeforce/types';
 import CodeforccesAPI from '../lib/codeforce/api';
 import { CodeforcesContentScript } from '../scripts';
 import {
+  addStatusTableHeaderColumn,
+  addTimeInputToRow,
   getSubmissionAnchors,
   getSubmissionDetail,
+  getSubmissionRows,
   getUserHandle,
 } from './codeforces/parseui';
 
-const header = document.getElementById('header');
-const pushBtn = document.createElement('button');
+let pendingSubmissionTime: Record<string, string> = {};
 
-header.insertBefore(pushBtn, header.querySelector('.lang-chooser'));
-
-pushBtn.style.position = 'absolute';
-pushBtn.style.top = '50%';
-pushBtn.style.right = '50%';
-pushBtn.style.transform = 'translateX(60%)';
-
-pushBtn.innerText = 'Push Last Submission';
-
-pushBtn.addEventListener('click', async () => {
-  chrome.runtime.sendMessage(
-    {
-      from: CodeforcesContentScript,
-      type: CodeforcesEvent.GET_LAST_SUBMISSION,
-      codeforcesHandle: getUserHandle(),
-    },
-    async (response: CodeforcesSubmission) => {
-      const solutionAnchors = getSubmissionAnchors();
-      const submissionAnchor = solutionAnchors.filter(
-        (anchor) =>
-          anchor.getAttribute('submissionid') === response.id.toString()
-      )[0];
-      submissionAnchor.click();
+/** Remove any "Push Last Submission" header button (legacy / cached script). */
+const removePushLastSubmissionButton = () => {
+  const header = document.getElementById('header');
+  if (!header) return;
+  const buttons = header.getElementsByTagName('button');
+  for (let i = buttons.length - 1; i >= 0; i--) {
+    if (buttons[i].innerText?.includes('Push Last Submission')) {
+      buttons[i].remove();
+      break;
     }
-  );
-});
+  }
+};
+
+const LOG_PREFIX = '[A2SV Codeforces]';
+
+const pushSubmission = async (submissionId: string, timeTaken: string) => {
+  console.log(LOG_PREFIX, 'pushSubmission started', { submissionId, timeTaken });
+  try {
+    const { code, questionUrl } = await getSubmissionDetail(
+      submissionId,
+      timeTaken
+    );
+    console.log(LOG_PREFIX, 'getSubmissionDetail done', { questionUrl, codeLength: code?.length });
+
+    const submission = await CodeforccesAPI.getSubmission(
+      getUserHandle(),
+      parseInt(submissionId)
+    );
+    console.log(LOG_PREFIX, 'getSubmission done', { problemName: submission?.problem?.name });
+
+    chrome.runtime.sendMessage(
+      {
+        from: CodeforcesContentScript,
+        type: CodeforcesEvent.PUSH_SUBMISSION_TO_SHEETS,
+        codeforcesHandle: getUserHandle(),
+        code,
+        timeTaken,
+        questionUrl,
+        submission,
+      },
+      (success) => {
+        console.log(LOG_PREFIX, 'push result', success ? 'success' : 'failure');
+        if (success) {
+          alert('Pushed to sheet!');
+        } else {
+          alert('Failed to push to sheet!');
+        }
+
+        const closeBtn = document.getElementsByClassName('close')[0] as
+          | HTMLAnchorElement
+          | undefined;
+        if (closeBtn) closeBtn.click();
+      }
+    );
+  } catch (e) {
+    console.error(LOG_PREFIX, 'pushSubmission error', e);
+    return;
+  }
+};
 
 const hookSubmissionAnchors = () => {
-  // get submission anchors to click on the one with the given submissionid
   const solutionAnchors = getSubmissionAnchors();
 
-  for (let anchor of solutionAnchors) {
+  for (const anchor of solutionAnchors) {
     anchor.addEventListener('click', async () => {
       const submissionId = anchor.getAttribute('submissionid');
+      if (!submissionId) return;
+
+      const preFilledTime = pendingSubmissionTime[submissionId];
+      delete pendingSubmissionTime[submissionId];
+      console.log(LOG_PREFIX, 'view-source clicked', { submissionId, preFilledTime: !!preFilledTime });
+
       try {
-        const { timeTaken, code, questionUrl } = await getSubmissionDetail(
-          submissionId
-        );
-
-        const codeforceHandle = getUserHandle();
-
-        const submission = await CodeforccesAPI.getSubmission(
-          codeforceHandle,
-          parseInt(submissionId)
-        );
-
-        chrome.runtime.sendMessage(
-          {
-            from: CodeforcesContentScript,
-            type: CodeforcesEvent.PUSH_SUBMISSION_TO_SHEETS,
-            codeforcesHandle: getUserHandle(),
-            code,
-            timeTaken,
-            questionUrl,
-            submission,
-          },
-          (success) => {
-            if (success) {
-              alert('Pushed to sheet!');
-            } else {
-              alert('Failed to push to sheet!');
+        if (preFilledTime) {
+          await pushSubmission(submissionId, preFilledTime);
+        } else {
+          const { timeTaken, code, questionUrl } = await getSubmissionDetail(
+            submissionId
+          );
+          const submission = await CodeforccesAPI.getSubmission(
+            getUserHandle(),
+            parseInt(submissionId)
+          );
+          chrome.runtime.sendMessage(
+            {
+              from: CodeforcesContentScript,
+              type: CodeforcesEvent.PUSH_SUBMISSION_TO_SHEETS,
+              codeforcesHandle: getUserHandle(),
+              code,
+              timeTaken,
+              questionUrl,
+              submission,
+            },
+            (success) => {
+              console.log(LOG_PREFIX, 'push result (modal)', success ? 'success' : 'failure');
+              if (success) alert('Pushed to sheet!');
+              else alert('Failed to push to sheet!');
+              const closeBtn = document.getElementsByClassName('close')[0] as
+                | HTMLAnchorElement
+                | undefined;
+              if (closeBtn) closeBtn.click();
             }
-
-            (
-              document.getElementsByClassName('close')[0] as HTMLAnchorElement
-            ).click();
-          }
-        );
+          );
+        }
       } catch (e) {
         return;
       }
@@ -86,4 +123,21 @@ const hookSubmissionAnchors = () => {
   }
 };
 
+const addTimeInputsToSubmissions = () => {
+  addStatusTableHeaderColumn();
+  const rows = getSubmissionRows();
+  for (const row of rows) {
+    addTimeInputToRow(row, (submissionId, timeTaken) => {
+      console.log(LOG_PREFIX, 'Submit from row', { submissionId, timeTaken });
+      pendingSubmissionTime[submissionId] = timeTaken;
+      const anchor = row.querySelector(
+        `a.view-source[submissionid="${submissionId}"]`
+      ) as HTMLAnchorElement;
+      if (anchor) anchor.click();
+    });
+  }
+};
+
+removePushLastSubmissionButton();
 hookSubmissionAnchors();
+addTimeInputsToSubmissions();

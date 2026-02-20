@@ -5,6 +5,8 @@ import { CodeforcesSubmission } from '../lib/codeforce/types';
 import { upload } from '../lib/github';
 import { getCodeforcesLangExtenson } from '../utils/lang';
 
+const LOG_PREFIX = '[A2SV Codeforces Service]';
+
 const push = async (
   codeforcesHandle: string,
   submission: CodeforcesSubmission,
@@ -14,10 +16,24 @@ const push = async (
   onSuccess: () => void,
   onFailure: () => void
 ) => {
+  console.log(LOG_PREFIX, 'push called', {
+    codeforcesHandle,
+    submissionId: submission.id,
+    problemName: submission.problem.name,
+    timeTaken,
+    codeLength: code?.length,
+  });
+
   chrome.storage.local
-    .get(['selectedRepo', 'folderPath', 'studentName'])
+    .get(['selectedRepo', 'folderPath', 'studentName', 'group'])
     .then((result) => {
-      const { selectedRepo, folderPath, studentName } = result;
+      const { selectedRepo, folderPath, studentName, group } = result;
+      console.log(LOG_PREFIX, 'storage', {
+        selectedRepo,
+        folderPath,
+        studentName,
+        group,
+      });
 
       const commitMsg = `Add solution for ${submission.problem.name}`;
 
@@ -35,19 +51,29 @@ const push = async (
         '-'
       )}.${getCodeforcesLangExtenson(submission.programmingLanguage)}`;
       path += 'codeforces/' + filename;
+      console.log(LOG_PREFIX, 'uploading to GitHub', { path, commitMsg });
 
       upload(selectedRepo, path, code, commitMsg).then((gitUrl) => {
+        console.log(LOG_PREFIX, 'GitHub upload done', { gitUrl });
         Codeforces.getTries(codeforcesHandle, submission.id)
-          .then((tries) => {
-            // For now, skip Codeforces submissions since the new format is for specific LeetCode problems
-            // A2SV.pushToSheet(
-            //   studentName,
-            //   submission.problem.name,
-            //   timeTaken
-            // );
+          .then(async (tries) => {
+            console.log(LOG_PREFIX, 'getTries done', { tries });
+            const pushed = await A2SV.pushToSheet({
+              group: group || '',
+              student_full_name: studentName || '',
+              problem_url: questionUrl,
+              github_link: gitUrl,
+              attempts: tries,
+              time: Number(timeTaken),
+            });
+            console.log(LOG_PREFIX, 'pushToSheet result', { pushed });
+            if (pushed) onSuccess();
+            else onFailure();
           })
-          .then(onSuccess)
-          .catch((e) => onFailure());
+          .catch((e) => {
+            console.error(LOG_PREFIX, 'getTries or pushToSheet error', e);
+            onFailure();
+          });
       });
     });
 };
@@ -64,6 +90,7 @@ const codeforcesHandler = (
       }
     );
   } else if (message.type === CodeforcesEvent.PUSH_SUBMISSION_TO_SHEETS) {
+    console.log(LOG_PREFIX, 'PUSH_SUBMISSION_TO_SHEETS received');
     push(
       message.codeforcesHandle,
       message.submission,

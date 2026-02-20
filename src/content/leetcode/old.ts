@@ -11,6 +11,7 @@ const injectContent = (observer: MutationObserver, observe: () => void) => {
   const submitBtn = buttons.filter(
     (btn) => btn.getAttribute('data-cy') === 'submit-code-btn'
   )[0];
+  if (!submitBtn) return;
 
   const pushBtn = submitBtn.cloneNode(true) as HTMLButtonElement;
   const timeField = document.createElement('input') as HTMLInputElement;
@@ -51,7 +52,7 @@ const injectContent = (observer: MutationObserver, observe: () => void) => {
         questionSlug: window.location.pathname.split('/')[2],
       },
       (result) => {
-        if (result.status === 'success') {
+        if (result?.status === 'success') {
           alert('Pushed to sheet!');
         } else {
           alert('Failed to push to sheet!');
@@ -61,6 +62,19 @@ const injectContent = (observer: MutationObserver, observe: () => void) => {
       }
     );
   });
+
+  const questionSlug = window.location.pathname.split('/')[2];
+  if (!submitBtn.getAttribute('data-a2sv-watch')) {
+    submitBtn.setAttribute('data-a2sv-watch', 'true');
+    submitBtn.addEventListener('click', () => {
+      chrome.runtime.sendMessage({
+        from: LeetcodeContentScript,
+        type: LeetcodeEvent.WATCH_SUBMISSION_AND_PUSH,
+        questionSlug,
+        startTime: Date.now(),
+      });
+    });
+  }
 
   observer.disconnect();
   submitBtn.parentNode.insertBefore(timeField, submitBtn.nextSibling);

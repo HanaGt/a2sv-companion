@@ -185,7 +185,7 @@ function onSubmit() {
   const formdata = getFormValues();
 
   chrome.storage.local
-    .get(["selectedRepo", "folderPath", "studentName"])
+    .get(["selectedRepo", "folderPath", "studentName", "group"])
     .then((storage) => {
       const ext = "py";
       const questionRef = document.getElementById(
@@ -210,12 +210,14 @@ function onSubmit() {
       )
         .then((gitUrl) => {
           a2sv
-            .pushToSheet(
-              storage.studentName,
-              formdata.availableQuestions,
-              formdata.timeTaken,
-              formdata.attempts,
-            )
+            .pushToSheet({
+              group: storage.group || "",
+              student_full_name: storage.studentName || "",
+              problem_url: formdata.availableQuestions,
+              github_link: gitUrl,
+              attempts: formdata.attempts,
+              time: formdata.timeTaken,
+            })
             .then((result) => {
               // send notification
 
@@ -252,6 +254,7 @@ function onSubmit() {
               }
             })
             .catch((err) => {
+              console.error("A2SV sheet submit error:", err);
               sendNotification("Error", "An error occured while submitting");
             });
         })

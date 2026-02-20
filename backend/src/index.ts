@@ -14,8 +14,19 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://a2sv-companion-dev.vercel.app', 'chrome-extension://*'],
-  credentials: true
+  origin: (origin, cb) => {
+    const allowed = [
+      'http://localhost:3000',
+      'https://a2sv-companion-dev.vercel.app',
+      'https://a2sv-companion.vercel.app',
+    ];
+    const isExtension = origin?.startsWith('chrome-extension://');
+    if (!origin || allowed.includes(origin) || isExtension) {
+      return cb(null, true);
+    }
+    cb(null, false);
+  },
+  credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
