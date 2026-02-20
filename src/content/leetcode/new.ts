@@ -120,7 +120,7 @@ const injectContent = (observer: MutationObserver, observe: () => void) => {
         if (result?.status === 'success') {
           alert('Pushed to sheet!');
         } else {
-          alert('Failed to push to sheet!');
+          alert('Failed to push!');
         }
         span.textContent = 'Push Last Submission';
         pushBtn.disabled = false;

@@ -12,7 +12,7 @@ export const getSubmissionRows = () => {
 
 /**
  * Add an extra column to the status table header (#, When, Who, Problem, Lang, Verdict, Time, Memory).
- * Inserts a <th> for "Time (min)" / Submit so the header matches the extra column in each row.
+ * Inserts a <th> for "Time (min)" / push so the header matches the extra column in each row.
  */
 export const addStatusTableHeaderColumn = () => {
   const rows = getSubmissionRows();
@@ -34,7 +34,7 @@ export const addStatusTableHeaderColumn = () => {
   th.className = 'status-frame-datatable a2sv-companion-col';
   th.style.whiteSpace = 'nowrap';
   th.style.padding = '4px 8px';
-  th.textContent = 'Time (min) / Submit';
+  th.textContent = 'Time (min) / push';
   headerRow.appendChild(th);
 };
 
@@ -42,15 +42,16 @@ export const addTimeInputToRow = (
   row: HTMLTableRowElement,
   onSubmitClick: (submissionId: string, timeTaken: string) => void
 ) => {
-  const submissionId = row.getAttribute('data-submission-id');
-  if (!submissionId) return;
-  const verdictCell = row.querySelector('span.verdict-accepted');
-  if (!verdictCell) return;
-
   const viewSourceAnchor = row.querySelector(
     'a.view-source'
   ) as HTMLAnchorElement;
   if (!viewSourceAnchor) return;
+  const submissionId = row.getAttribute('data-submission-id')
+    || viewSourceAnchor.getAttribute('submissionid');
+  if (!submissionId) return;
+  row.setAttribute('data-submission-id', submissionId);
+  const verdictCell = row.querySelector('span.verdict-accepted');
+  if (!verdictCell) return;
 
   const cell = document.createElement('td');
   cell.className = 'status-frame-datatable';
@@ -67,32 +68,34 @@ export const addTimeInputToRow = (
   timeInput.min = '0';
   timeInput.style.width = '70px';
   timeInput.style.padding = '4px 6px';
-  timeInput.style.background = '#1e1e1e';
-  timeInput.style.border = '1px solid #3d3d3d';
+  timeInput.style.background = '#f5f5f5';
+  timeInput.style.border = '1px solid #ccc';
   timeInput.style.borderRadius = '4px';
-  timeInput.style.color = '#fff';
+  timeInput.style.color = '#333';
 
-  const submitBtn = document.createElement('button');
-  submitBtn.textContent = 'Submit';
-  submitBtn.type = 'button';
-  submitBtn.style.padding = '4px 10px';
-  submitBtn.style.background = '#0d6efd';
-  submitBtn.style.color = '#fff';
-  submitBtn.style.border = 'none';
-  submitBtn.style.borderRadius = '4px';
-  submitBtn.style.cursor = 'pointer';
-  submitBtn.style.fontSize = '12px';
+  const pushBtn = document.createElement('button');
+  pushBtn.type = 'button';
+  pushBtn.className = 'a2sv-push-to-sheet-btn';
+  pushBtn.textContent = 'push';
+  pushBtn.style.padding = '4px 10px';
+  pushBtn.style.background = '#0d6efd';
+  pushBtn.style.color = '#fff';
+  pushBtn.style.border = 'none';
+  pushBtn.style.borderRadius = '4px';
+  pushBtn.style.cursor = 'pointer';
+  pushBtn.style.fontSize = '12px';
 
-  submitBtn.addEventListener('click', (e) => {
+  pushBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
     const time = timeInput.value.trim();
     if (!time) return;
     onSubmitClick(submissionId, time);
   });
 
   wrapper.appendChild(timeInput);
-  wrapper.appendChild(submitBtn);
+  wrapper.appendChild(pushBtn);
   cell.appendChild(wrapper);
   row.appendChild(cell);
 };
@@ -175,7 +178,7 @@ export const getSubmissionDetail = async (
       });
     };
 
-    setTimeout(() => {
+    const runWhenModalReady = () => {
       const copyBtn = document.getElementById('program-source-text-copy');
       if (!copyBtn) {
         reject();
@@ -200,25 +203,48 @@ export const getSubmissionDetail = async (
       timeTaken.min = '0';
       timeTaken.style.padding = '6px 10px';
       timeTaken.style.width = '120px';
+      timeTaken.style.background = '#f5f5f5';
+      timeTaken.style.border = '1px solid #ccc';
+      timeTaken.style.color = '#333';
 
-      const submitBtn = document.createElement('button');
-      submitBtn.textContent = 'Submit';
-      submitBtn.type = 'button';
-      submitBtn.style.padding = '6px 12px';
-      submitBtn.style.cursor = 'pointer';
+      const pushBtn = document.createElement('button');
+      pushBtn.className = 'a2sv-push-to-sheet-btn';
+      pushBtn.textContent = 'push';
+      pushBtn.type = 'button';
+      pushBtn.style.padding = '6px 12px';
+      pushBtn.style.cursor = 'pointer';
 
       wrapper.appendChild(timeTaken);
-      wrapper.appendChild(submitBtn);
+      wrapper.appendChild(pushBtn);
       copyBtn.parentNode.insertBefore(wrapper, copyBtn);
 
-      submitBtn.addEventListener('click', () => {
+      pushBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         if (timeTaken.value == '') return;
         tryResolve(timeTaken.value);
       });
       timeTaken.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && timeTaken.value !== '') tryResolve(timeTaken.value);
       });
-    }, 1000);
+    };
+
+    const pollIntervalMs = 200;
+    const timeoutMs = 8000;
+    const start = Date.now();
+    const poll = () => {
+      if (document.getElementById('program-source-text-copy')) {
+        runWhenModalReady();
+        return;
+      }
+      if (Date.now() - start >= timeoutMs) {
+        reject();
+        return;
+      }
+      setTimeout(poll, pollIntervalMs);
+    };
+    setTimeout(poll, 300);
   });
 };
 

@@ -9,7 +9,7 @@ const isOnProblemPage = () => {
 };
 
 const onMutation = (observer: MutationObserver) => {
-  const hide = !isOnProblemPage();
+  let hide = !isOnProblemPage();
   if (
     window.location.href.includes('submissions') &&
     window.location.href.includes('https://leetcode.com/problems/')
