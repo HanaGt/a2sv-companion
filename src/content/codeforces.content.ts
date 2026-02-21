@@ -6,6 +6,7 @@ import {
   addTimeInputToRow,
   getSubmissionAnchors,
   getSubmissionDetail,
+  getSubmissionDetailWithoutModal,
   getSubmissionRows,
   getUserHandle,
 } from './codeforces/parseui';
@@ -34,7 +35,7 @@ const addPushLastSubmissionBar = () => {
 
   const bar = document.createElement('div');
   bar.className = 'a2sv-push-last-bar';
-  bar.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:6px 0;';
+  bar.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:6px 0;font-family:Verdana,sans-serif;';
   const label = document.createElement('span');
   label.textContent = 'Push Last Submission:';
   label.style.marginRight = '4px';
@@ -42,11 +43,11 @@ const addPushLastSubmissionBar = () => {
   timeInput.type = 'number';
   timeInput.placeholder = 'Time (min)';
   timeInput.min = '0';
-  timeInput.style.cssText = 'width:70px;padding:4px 6px;background:#f5f5f5;border:1px solid #ccc;border-radius:4px;color:#333;';
+  timeInput.style.cssText = 'width:70px;padding:4px 6px;background:#f5f5f5;border:1px solid #ccc;border-radius:4px;color:#333;font-family:Verdana,sans-serif;';
   const btn = document.createElement('button');
   btn.textContent = 'Push Last Submission';
   btn.type = 'button';
-  btn.style.cssText = 'padding:6px 12px;background:#0d6efd;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;';
+  btn.style.cssText = 'padding:6px 12px;background:#c3c4c3;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:Verdana,sans-serif;';
 
   btn.addEventListener('click', async () => {
     const timeTaken = timeInput.value.trim();
@@ -114,13 +115,14 @@ const waitForModal = (timeoutMs: number): Promise<void> => {
   });
 };
 
-const pushSubmission = async (submissionId: string, timeTaken: string) => {
+const pushSubmission = async (
+  submissionId: string,
+  timeTaken: string,
+  prefetched?: { code: string; questionUrl: string }
+) => {
   console.log(LOG_PREFIX, 'pushSubmission started', { submissionId, timeTaken });
   try {
-    const { code, questionUrl } = await getSubmissionDetail(
-      submissionId,
-      timeTaken
-    );
+    const { code, questionUrl } = prefetched ?? (await getSubmissionDetail(submissionId, timeTaken));
     console.log(LOG_PREFIX, 'getSubmissionDetail done', { questionUrl, codeLength: code?.length });
 
     const submission = await CodeforccesAPI.getSubmission(
@@ -139,18 +141,19 @@ const pushSubmission = async (submissionId: string, timeTaken: string) => {
         questionUrl,
         submission,
       },
-      (success) => {
-        console.log(LOG_PREFIX, 'push result', success ? 'success' : 'failure');
-        if (success) {
-          alert('Pushed to sheet!');
-        } else {
-          alert('Failed to push!');
+      (response: { success: boolean; message: string } | boolean) => {
+        const result = typeof response === 'object' && response !== null && 'message' in response
+          ? response
+          : { success: !!response, message: response ? 'Pushed to sheet!' : 'Failed to push!' };
+        console.log(LOG_PREFIX, 'push result', result);
+        alert(result.message);
+        // Only close modal if we opened it (i.e. we didn't use prefetched)
+        if (!prefetched) {
+          const closeBtn = document.getElementsByClassName('close')[0] as
+            | HTMLAnchorElement
+            | undefined;
+          if (closeBtn) closeBtn.click();
         }
-
-        const closeBtn = document.getElementsByClassName('close')[0] as
-          | HTMLAnchorElement
-          | undefined;
-        if (closeBtn) closeBtn.click();
       }
     );
   } catch (e) {
@@ -192,10 +195,12 @@ const hookSubmissionAnchors = () => {
               questionUrl,
               submission,
             },
-            (success) => {
-              console.log(LOG_PREFIX, 'push result (modal)', success ? 'success' : 'failure');
-              if (success) alert('Pushed to sheet!');
-              else alert('Failed to push!');
+            (response: { success: boolean; message: string } | boolean) => {
+              const result = typeof response === 'object' && response !== null && 'message' in response
+                ? response
+                : { success: !!response, message: response ? 'Pushed to sheet!' : 'Failed to push!' };
+              console.log(LOG_PREFIX, 'push result (modal)', result);
+              alert(result.message);
               const closeBtn = document.getElementsByClassName('close')[0] as
                 | HTMLAnchorElement
                 | undefined;
@@ -214,13 +219,15 @@ const addTimeInputsToSubmissions = () => {
   addStatusTableHeaderColumn();
   const rows = getSubmissionRows();
   for (const row of rows) {
-    addTimeInputToRow(row, (submissionId, timeTaken) => {
+    addTimeInputToRow(row, async (submissionId, timeTaken) => {
       console.log(LOG_PREFIX, 'Submit from row', { submissionId, timeTaken });
-      pendingSubmissionTime[submissionId] = timeTaken;
-      const anchor = row.querySelector(
-        `a.view-source[submissionid="${submissionId}"]`
-      ) as HTMLAnchorElement;
-      if (anchor) anchor.click();
+      try {
+        const { code, questionUrl } = await getSubmissionDetailWithoutModal(row, submissionId, timeTaken);
+        await pushSubmission(submissionId, timeTaken, { code, questionUrl });
+      } catch (e) {
+        console.error(LOG_PREFIX, 'Push from row error', e);
+        alert('Failed to push: ' + (e instanceof Error ? e.message : 'Could not get submission details'));
+      }
     });
   }
 };

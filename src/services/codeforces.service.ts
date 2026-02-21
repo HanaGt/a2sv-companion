@@ -13,8 +13,7 @@ const push = async (
   timeTaken: number,
   code: string,
   questionUrl: string,
-  onSuccess: () => void,
-  onFailure: () => void
+  sendResponse: (result: { success: boolean; message: string }) => void
 ) => {
   console.log(LOG_PREFIX, 'push called', {
     codeforcesHandle,
@@ -53,28 +52,28 @@ const push = async (
       path += 'codeforces/' + filename;
       console.log(LOG_PREFIX, 'uploading to GitHub', { path, commitMsg });
 
-      upload(selectedRepo, path, code, commitMsg).then((gitUrl) => {
-        console.log(LOG_PREFIX, 'GitHub upload done', { gitUrl });
-        Codeforces.getTries(codeforcesHandle, submission.id)
-          .then(async (tries) => {
-            console.log(LOG_PREFIX, 'getTries done', { tries });
-            const pushed = await A2SV.pushToSheet({
-              group: group || '',
-              student_full_name: studentName || '',
-              problem_url: questionUrl,
-              github_link: gitUrl,
-              attempts: tries,
-              time: Number(timeTaken),
-            });
-            console.log(LOG_PREFIX, 'pushToSheet result', { pushed });
-            if (pushed) onSuccess();
-            else onFailure();
-          })
-          .catch((e) => {
-            console.error(LOG_PREFIX, 'getTries or pushToSheet error', e);
-            onFailure();
+      upload(selectedRepo, path, code, commitMsg)
+        .then((gitUrl) => {
+          console.log(LOG_PREFIX, 'GitHub upload done', { gitUrl });
+          return Codeforces.getTries(codeforcesHandle, submission.id).then((tries) => ({ gitUrl, tries }));
+        })
+        .then(async ({ gitUrl, tries }) => {
+          console.log(LOG_PREFIX, 'getTries done', { tries });
+          const result = await A2SV.pushToSheet({
+            group: group || '',
+            student_full_name: studentName || '',
+            problem_url: questionUrl,
+            github_link: gitUrl,
+            attempts: tries,
+            time: Number(timeTaken),
           });
-      });
+          console.log(LOG_PREFIX, 'pushToSheet result', result);
+          sendResponse(result);
+        })
+        .catch((e) => {
+          console.error(LOG_PREFIX, 'upload or push error', e);
+          sendResponse({ success: false, message: e instanceof Error ? e.message : 'Request failed' });
+        });
     });
 };
 
@@ -97,8 +96,7 @@ const codeforcesHandler = (
       message.timeTaken,
       message.code,
       message.questionUrl,
-      () => sendResponse(true),
-      () => sendResponse(false)
+      sendResponse
     );
   }
 };

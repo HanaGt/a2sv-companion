@@ -9,7 +9,12 @@ export interface SheetPayload {
   time: number;
 }
 
-const pushToSheet = async (payload: SheetPayload): Promise<boolean> => {
+export interface PushToSheetResult {
+  success: boolean;
+  message: string;
+}
+
+const pushToSheet = async (payload: SheetPayload): Promise<PushToSheetResult> => {
   const body = {
     group: payload.group,
     student_full_name: payload.student_full_name,
@@ -28,11 +33,21 @@ const pushToSheet = async (payload: SheetPayload): Promise<boolean> => {
     });
     const text = await response.text();
     console.log('A2SV submit (Apps Script response):', response.status, response.statusText, text);
-    if (response.ok) return true;
-    return false;
+    let success = response.ok;
+    let message = success ? 'Pushed to sheet!' : 'Failed to push.';
+    try {
+      const json = JSON.parse(text) as { status?: string; message?: string };
+      if (json.message) message = json.message;
+      else if (json.status && !success) message = json.status;
+      if (json.status === 'error') success = false;
+    } catch {
+      if (!success && text) message = text;
+    }
+    return { success, message };
   } catch (err) {
     console.error('A2SV submit (Apps Script failed):', err);
-    throw err;
+    const message = err instanceof Error ? err.message : 'Request failed';
+    return { success: false, message };
   }
 };
 

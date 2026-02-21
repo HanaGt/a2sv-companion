@@ -34,6 +34,7 @@ export const addStatusTableHeaderColumn = () => {
   th.className = 'status-frame-datatable a2sv-companion-col';
   th.style.whiteSpace = 'nowrap';
   th.style.padding = '4px 8px';
+  th.style.fontFamily = 'Verdana, sans-serif';
   th.textContent = 'Time (min) / push';
   headerRow.appendChild(th);
 };
@@ -61,6 +62,7 @@ export const addTimeInputToRow = (
   wrapper.style.display = 'flex';
   wrapper.style.alignItems = 'center';
   wrapper.style.gap = '6px';
+  wrapper.style.fontFamily = 'Verdana, sans-serif';
 
   const timeInput = document.createElement('input');
   timeInput.type = 'number';
@@ -72,18 +74,20 @@ export const addTimeInputToRow = (
   timeInput.style.border = '1px solid #ccc';
   timeInput.style.borderRadius = '4px';
   timeInput.style.color = '#333';
+  timeInput.style.fontFamily = 'Verdana, sans-serif';
 
   const pushBtn = document.createElement('button');
   pushBtn.type = 'button';
   pushBtn.className = 'a2sv-push-to-sheet-btn';
   pushBtn.textContent = 'push';
   pushBtn.style.padding = '4px 10px';
-  pushBtn.style.background = '#0d6efd';
-  pushBtn.style.color = '#fff';
+  pushBtn.style.background = '#c3c4c3';
+  pushBtn.style.color = '#000';
   pushBtn.style.border = 'none';
   pushBtn.style.borderRadius = '4px';
   pushBtn.style.cursor = 'pointer';
   pushBtn.style.fontSize = '12px';
+  pushBtn.style.fontFamily = 'Verdana, sans-serif';
 
   pushBtn.addEventListener('click', (e) => {
     e.preventDefault();
@@ -127,6 +131,42 @@ const getSourceCodeFromModal = (): Promise<string> => {
     }
     navigator.clipboard.readText().then(resolve).catch(() => resolve(''));
   });
+};
+
+/** Get question URL from a status table row (problem link cell). */
+export const getQuestionUrlFromRow = (row: HTMLTableRowElement): string | null => {
+  const cols = [].slice.call(row.children) as HTMLElement[];
+  const problemCell = cols.filter((col) => col.hasAttribute('data-problemid'))[0];
+  if (!problemCell) return null;
+  const link = problemCell.getElementsByTagName('a')[0];
+  return link ? link.href : null;
+};
+
+/**
+ * Get submission code and question URL by fetching the submission page (no modal).
+ * Use this when pushing from the row so we don't open view-source.
+ */
+export const getSubmissionDetailWithoutModal = async (
+  row: HTMLTableRowElement,
+  submissionId: string,
+  timeTaken: string
+): Promise<{ code: string; timeTaken: string; questionUrl: string }> => {
+  const questionUrl = getQuestionUrlFromRow(row);
+  if (!questionUrl) throw new Error('Could not get question URL from row');
+
+  const viewSourceAnchor = row.querySelector('a.view-source') as HTMLAnchorElement;
+  if (!viewSourceAnchor || !viewSourceAnchor.href) throw new Error('Could not get submission URL');
+
+  const res = await fetch(viewSourceAnchor.href, { credentials: 'same-origin' });
+  const html = await res.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const sourceEl =
+    doc.getElementById('program-source-text') ||
+    doc.querySelector('.program-source pre');
+  const code = sourceEl && sourceEl.textContent ? sourceEl.textContent.trim() : '';
+
+  return { code, timeTaken, questionUrl };
 };
 
 export const getSubmissionDetail = async (
@@ -195,6 +235,7 @@ export const getSubmissionDetail = async (
       wrapper.style.alignItems = 'center';
       wrapper.style.gap = '8px';
       wrapper.style.marginBottom = '8px';
+      wrapper.style.fontFamily = 'Verdana, sans-serif';
 
       const timeTaken = document.createElement('input');
       timeTaken.id = 'time-taken';
@@ -206,6 +247,7 @@ export const getSubmissionDetail = async (
       timeTaken.style.background = '#f5f5f5';
       timeTaken.style.border = '1px solid #ccc';
       timeTaken.style.color = '#333';
+      timeTaken.style.fontFamily = 'Verdana, sans-serif';
 
       const pushBtn = document.createElement('button');
       pushBtn.className = 'a2sv-push-to-sheet-btn';
@@ -213,6 +255,7 @@ export const getSubmissionDetail = async (
       pushBtn.type = 'button';
       pushBtn.style.padding = '6px 12px';
       pushBtn.style.cursor = 'pointer';
+      pushBtn.style.fontFamily = 'Verdana, sans-serif';
 
       wrapper.appendChild(timeTaken);
       wrapper.appendChild(pushBtn);
