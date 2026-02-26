@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A2SV Companion</title>
+</head>
+<body class="popup-modal">
+    <div class="container">
+        <div class="nav-top" id="nav-top">
+            <div class="brand">
+                <img src="icons/icon_128.png" alt="" id="avatar">
+                <span class="brand-text"><span class="status-dot"></span>A2SV</span>
+                <span id="greeting"></span>
+            </div>
+            <div class="nav-actions">
+                <button type="button" id="profile-btn" class="logout hidden">Profile</button>
+                <button type="button" id="nav-sync-btn" class="sync-btn nav-sync-btn hidden" title="Fetch latest sheet map for instant validation">Sync</button>
+            </div>
+        </div>
+
+        <!-- Step 1: GitHub login -->
+        <div id="login-section">
+            <div class="action-area">
+                <button type="button" id="login-btn" class="push-btn">Login with GitHub</button>
+            </div>
+        </div>
+
+        <!-- Step 2: One-time profile setup -->
+        <div id="profile-section" class="hidden">
+            <div class="form-grid">
+                <div class="input-box">
+                    <label for="student-name">Contributor</label>
+                    <input type="text" id="student-name" placeholder="Your name on sheet" required>
+                </div>
+                <div class="input-box group-with-sync">
+                    <label for="group">Group</label>
+                    <div class="group-row">
+                        <input type="text" id="group" placeholder="e.g. G71">
+                    </div>
+                </div>
+                <div class="input-box full-width">
+                    <label for="repos">Repo Source</label>
+                    <select id="repos">
+                        <option value="">Select a repo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="action-area">
+                <button type="button" id="save-profile-btn" class="push-btn">Save profile</button>
+            </div>
+            <p id="profile-success" class="profile-success hidden">Profile saved successfully.</p>
+        </div>
+
+        <!-- Step 3: Daily use – manual submit (now directly in popup) -->
+        <div id="main-section" class="hidden">
+            <div class="manual-header">
+                <h2 class="manual-title">Manual submission</h2>
+            </div>
+
+            <!-- Manual submission form (moved from sidepanel.html) -->
+            <div class="manual-form">
+                <!-- Problem URL Input -->
+                <div class="mb-4">
+                    <label for="problem-url" class="block text-sm font-medium"
+                    >Problem URL</label
+                    >
+                    <input
+                    type="url"
+                    id="problem-url"
+                    placeholder="https://leetcode.com/problems/..."
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    />
+                </div>
+
+                <!-- Additional Fields -->
+                <div class="mb-4">
+                    <label for="code" class="block text-sm font-medium">Your Code</label>
+                    <textarea
+                    id="code"
+                    rows="6"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    ></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="time-taken" class="block text-sm font-medium"
+                    >Time Taken (in minutes)</label
+                    >
+                    <input
+                    type="number"
+                    id="time-taken"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    />
+                </div>
+
+                <!-- Additional Field: Number of Attempts -->
+                <div class="mb-4">
+                    <label for="attempts" class="block text-sm font-medium"
+                    >Number of Attempts</label
+                    >
+                    <input
+                    type="number"
+                    id="attempts"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    />
+                </div>
+
+                <p id="manual-submit-error" class="manual-submit-error hidden" role="alert"></p>
+                <p id="manual-submit-info" class="manual-submit-info hidden" role="status"></p>
+                <!-- Submit Button -->
+                <button
+                    id="submit-btn"
+                    class="sync-btn manual-submit-btn"
+                    disabled
+                >
+                    Submit
+                </button>
+            </div>
+        </div>
+        <div class="bottom-bar">
+            <button type="button" id="logout-btn" class="logout hidden">
+                <span class="logout-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M12 2v10" />
+                        <circle cx="12" cy="13" r="8" />
+                    </svg>
+                </span>
+                <span class="logout-label">Logout</span>
+            </button>
+        </div>
+    </div>
+    <script src="main.js"></script>
+    <script src="sidepanel.js"></script>
+</body>
+</html>
