@@ -43,6 +43,10 @@ const authHandler = (
       tabId: sender.tab.id,
       title: 'Authorization failed',
     });
+  } else if (message.type === AuthEvent.CLOSE_AUTH_TAB) {
+    if (sender.tab && sender.tab.id) {
+      chrome.tabs.remove(sender.tab.id);
+    }
   }
 };
 

@@ -27,3 +27,23 @@ if (token === null) {
     token,
   });
 }
+
+// Handle close tab capability via extension messaging
+const closeButton = document.querySelector('.btn');
+if (closeButton) {
+  closeButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    chrome.runtime.sendMessage({
+      from: AuthContentScript,
+      type: AuthEvent.CLOSE_AUTH_TAB,
+    });
+  });
+}
+
+// Auto-close after a short delay
+setTimeout(() => {
+  chrome.runtime.sendMessage({
+    from: AuthContentScript,
+    type: AuthEvent.CLOSE_AUTH_TAB,
+  });
+}, 2000);

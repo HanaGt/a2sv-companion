@@ -166,15 +166,8 @@ app.get('/', async (req, res) => {
 
     <input type="hidden" id="access_token" value="${tokenData.access_token}" />
 
-    <a href="#" onclick="window.close()" class="btn">Close Window</a>
+    <a href="#" class="btn">Close Window</a>
   </div>
-
-  <script>
-    // Also auto-close after a short delay in case the user doesn't click
-    setTimeout(() => {
-      window.close();
-    }, 2000);
-  </script>
 </body>
 </html>`;
 
