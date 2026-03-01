@@ -132,19 +132,15 @@ app.get('/', async (req, res) => {
       margin-bottom: 30px;
     }
 
-    .btn {
-      display: inline-block;
-      padding: 12px 22px;
+    .hint {
+      display: block;
+      margin-top: 16px;
+      padding: 10px 14px;
       border-radius: 8px;
-      background-color: #4f46e5;
-      color: white;
-      text-decoration: none;
-      font-weight: 600;
-      transition: 0.2s ease;
-    }
-
-    .btn:hover {
-      background-color: #4338ca;
+      background-color: #f1f5f9;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.5;
     }
 
     @keyframes fadeIn {
@@ -166,7 +162,7 @@ app.get('/', async (req, res) => {
 
     <input type="hidden" id="access_token" value="${tokenData.access_token}" />
 
-    <a href="#" class="btn">Close Window</a>
+    <span class="hint">You can close this tab or window manually (e.g. press Ctrl+W or click the ×).</span>
   </div>
 </body>
 </html>`;
